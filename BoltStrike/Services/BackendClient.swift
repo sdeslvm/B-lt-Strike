@@ -3,16 +3,16 @@
 import Foundation
 import os.log
 
-private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "BoltStrike", category: "BackendClient")
+private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "BoltStrike", category: "BoltStrikeBackendClient")
 
-enum BackendError: Error {
+enum BoltStrikeBackendError: Error {
     case invalidURL
     case invalidResponse
     case decodingFailed
 }
 
-final class BackendClient {
-    func requestFinalLink(url: URL) async throws -> BackendLinkResponse {
+final class BoltStrikeBackendClient {
+    func boltStrikeRequestFinalLink(url: URL) async throws -> BoltStrikeBackendLinkResponse {
         logger.info("[POST] 📤 Sending request to: \(url.absoluteString)")
         
         var request = URLRequest(url: url)
@@ -24,7 +24,7 @@ final class BackendClient {
 
         guard let httpResponse = response as? HTTPURLResponse else {
             logger.error("[POST] ❌ Invalid response type")
-            throw BackendError.invalidResponse
+            throw BoltStrikeBackendError.invalidResponse
         }
         
         logger.info("[POST] Response status code: \(httpResponse.statusCode)")
@@ -35,11 +35,11 @@ final class BackendClient {
         
         guard 200..<300 ~= httpResponse.statusCode else {
             logger.error("[POST] ❌ Bad status code: \(httpResponse.statusCode)")
-            throw BackendError.invalidResponse
+            throw BoltStrikeBackendError.invalidResponse
         }
 
         do {
-            let decoded = try JSONDecoder().decode(BackendLinkResponse.self, from: data)
+            let decoded = try JSONDecoder().decode(BoltStrikeBackendLinkResponse.self, from: data)
             logger.info("[POST] ✅ Decoded response - domain: '\(decoded.domain)', tld: '\(decoded.tld)'")
             if let finalURL = decoded.finalURL {
                 logger.info("[POST] ✅ Final URL: \(finalURL.absoluteString)")
@@ -49,7 +49,7 @@ final class BackendClient {
             return decoded
         } catch {
             logger.error("[POST] ❌ Decoding failed: \(error.localizedDescription)")
-            throw BackendError.decodingFailed
+            throw BoltStrikeBackendError.decodingFailed
         }
     }
 }

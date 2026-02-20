@@ -10,11 +10,11 @@ import os.log
 import UIKit
 #endif
 
-private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "BoltStrike", category: "TrackingService")
+private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "BoltStrike", category: "BoltStrikeTrackingService")
 
 // MARK: - Simulator Mock Configuration
 #if targetEnvironment(simulator)
-enum SimulatorMockConfig {
+enum BoltStrikeSimulatorMockConfig {
     /// Включить mock-данные для симулятора (только для тестирования)
     static let useMockData = false
     
@@ -24,8 +24,8 @@ enum SimulatorMockConfig {
 }
 #endif
 
-final class PushTokenStore: NSObject, MessagingDelegate {
-    static let shared = PushTokenStore()
+final class BoltStrikePushTokenStore: NSObject, MessagingDelegate {
+    static let boltStrikeShared = BoltStrikePushTokenStore()
 
     private let queue = DispatchQueue(label: "push.token.store", attributes: .concurrent)
     private var storedToken: String?
@@ -35,26 +35,26 @@ final class PushTokenStore: NSObject, MessagingDelegate {
     }
 
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
-        update(token: fcmToken)
+        boltStrikeUpdate(token: fcmToken)
     }
 
-    func update(token: String?) {
+    func boltStrikeUpdate(token: String?) {
         queue.async(flags: .barrier) {
             self.storedToken = token
         }
     }
 }
 
-final class TrackingService {
-    private let persistence: PersistenceService
-    private let pushTokenStore: PushTokenStore
+final class BoltStrikeTrackingService {
+    private let persistence: BoltStrikePersistenceService
+    private let pushTokenStore: BoltStrikePushTokenStore
 
-    init(persistence: PersistenceService, pushTokenStore: PushTokenStore) {
+    init(persistence: BoltStrikePersistenceService, pushTokenStore: BoltStrikePushTokenStore) {
         self.persistence = persistence
         self.pushTokenStore = pushTokenStore
     }
 
-    func collectPayload() async -> TrackingPayload? {
+    func boltStrikeCollectPayload() async -> BoltStrikeTrackingPayload? {
         logger.info("[Tracking] Collecting payload...")
         
         // Даём Firebase время на инициализацию (особенно при холодном старте)
@@ -64,38 +64,38 @@ final class TrackingService {
         logger.info("[Tracking] appsflyer_id: \(appsFlyerID.isEmpty ? "<empty>" : appsFlyerID)")
         
         #if targetEnvironment(simulator)
-        if SimulatorMockConfig.useMockData {
+        if BoltStrikeSimulatorMockConfig.useMockData {
             logger.info("[Tracking] 📱 SIMULATOR MODE: Using mock data (useMockData = true)")
-            guard let context = Self.collectDeviceContext() else {
+            guard let context = Self.boltStrikeCollectDeviceContext() else {
                 logger.error("[Tracking] ❌ deviceContext is nil")
                 return nil
             }
-            logger.info("[Tracking] mock app_instance_id: \(SimulatorMockConfig.mockAppInstanceID)")
-            logger.info("[Tracking] mock att_token: \(SimulatorMockConfig.mockAttToken.prefix(30))...")
-            logger.info("[Tracking] mock fcm_token: \(SimulatorMockConfig.mockFCMToken.prefix(30))...")
+            logger.info("[Tracking] mock app_instance_id: \(BoltStrikeSimulatorMockConfig.mockAppInstanceID)")
+            logger.info("[Tracking] mock att_token: \(BoltStrikeSimulatorMockConfig.mockAttToken.prefix(30))...")
+            logger.info("[Tracking] mock fcm_token: \(BoltStrikeSimulatorMockConfig.mockFCMToken.prefix(30))...")
             logger.info("[Tracking] uuid: \(context.uuid)")
             logger.info("[Tracking] osVersion: \(context.osVersion)")
             logger.info("[Tracking] devModel: \(context.deviceModel)")
             logger.info("[Tracking] bundle: \(context.bundleID)")
             logger.info("[Tracking] ✅ All tracking data collected (MOCK)")
             
-            return TrackingPayload(
+            return BoltStrikeTrackingPayload(
                 appsFlyerID: appsFlyerID,
-                appInstanceID: SimulatorMockConfig.mockAppInstanceID,
+                appInstanceID: BoltStrikeSimulatorMockConfig.mockAppInstanceID,
                 uuid: context.uuid,
                 osVersion: context.osVersion,
                 deviceModel: context.deviceModel,
                 bundleID: context.bundleID,
-                fcmToken: SimulatorMockConfig.mockFCMToken,
-                attToken: SimulatorMockConfig.mockAttToken
+                fcmToken: BoltStrikeSimulatorMockConfig.mockFCMToken,
+                attToken: BoltStrikeSimulatorMockConfig.mockAttToken
             )
         }
         logger.info("[Tracking] 📱 SIMULATOR MODE: Mock disabled, using real data")
 #endif
         
         async let appInstanceID = try? await Installations.installations().installationID()
-        async let attToken = Self.fetchAttributionToken()
-        async let deviceContext = Self.collectDeviceContext()
+        async let attToken = Self.boltStrikeFetchAttributionToken()
+        async let deviceContext = Self.boltStrikeCollectDeviceContext()
         #if targetEnvironment(simulator)
         let token = "simulator-token-\(UUID().uuidString)"
         #else
@@ -199,7 +199,7 @@ final class TrackingService {
         logger.info("[Tracking] ✅ All tracking data collected successfully")
 
         #if !targetEnvironment(simulator)
-        return TrackingPayload(
+        return BoltStrikeTrackingPayload(
             appsFlyerID: appsFlyerID,
             appInstanceID: finalFirebaseID,
             uuid: context.uuid,
@@ -210,7 +210,7 @@ final class TrackingService {
             attToken: finalAttToken
         )
         #else
-        return TrackingPayload(
+        return BoltStrikeTrackingPayload(
             appsFlyerID: appsFlyerID,
             appInstanceID: finalFirebaseID,
             uuid: context.uuid,
@@ -223,7 +223,7 @@ final class TrackingService {
         #endif
     }
 
-    private static func fetchAttributionToken() -> String? {
+    private static func boltStrikeFetchAttributionToken() -> String? {
         #if targetEnvironment(simulator)
         return nil // ATT не работает на симуляторе
         #else
@@ -231,7 +231,7 @@ final class TrackingService {
         #endif
     }
 
-    private static func collectDeviceContext() -> (uuid: String, osVersion: String, deviceModel: String, bundleID: String)? {
+    private static func boltStrikeCollectDeviceContext() -> (uuid: String, osVersion: String, deviceModel: String, bundleID: String)? {
         #if canImport(UIKit)
         let uuid = UUID().uuidString.lowercased()
         let osVersion = UIDevice.current.systemVersion

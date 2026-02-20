@@ -3,24 +3,24 @@
 import Foundation
 import os.log
 
-private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "BoltStrike", category: "LaunchService")
+private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "BoltStrike", category: "BoltStrikeLaunchService")
 
-final class LaunchService {
-    private let persistence: PersistenceService
-    private let trackingService: TrackingService
-    private let remoteConfigService: FirebaseRealtimeService
-    private let backendClient: BackendClient
-    private let linkAssemblyService: LinkAssemblyService
-    private let cookieStore: CookieStoreManager
+final class BoltStrikeLaunchService {
+    private let persistence: BoltStrikePersistenceService
+    private let trackingService: BoltStrikeTrackingService
+    private let remoteConfigService: BoltStrikeFirebaseRealtimeService
+    private let backendClient: BoltStrikeBackendClient
+    private let linkAssemblyService: BoltStrikeLinkAssemblyService
+    private let cookieStore: BoltStrikeCookieStoreManager
     
     private let stubURL = URL(string: "https://boltstrikex.pro/user")!
 
-    init(persistence: PersistenceService,
-         trackingService: TrackingService,
-         remoteConfigService: FirebaseRealtimeService,
-         backendClient: BackendClient,
-         linkAssemblyService: LinkAssemblyService,
-         cookieStore: CookieStoreManager) {
+    init(persistence: BoltStrikePersistenceService,
+         trackingService: BoltStrikeTrackingService,
+         remoteConfigService: BoltStrikeFirebaseRealtimeService,
+         backendClient: BoltStrikeBackendClient,
+         linkAssemblyService: BoltStrikeLinkAssemblyService,
+         cookieStore: BoltStrikeCookieStoreManager) {
         self.persistence = persistence
         self.trackingService = trackingService
         self.remoteConfigService = remoteConfigService
@@ -29,74 +29,74 @@ final class LaunchService {
         self.cookieStore = cookieStore
     }
 
-    func initialOutcome() -> LaunchOutcome {
+    func boltStrikeInitialOutcome() -> BoltStrikeLaunchOutcome {
         logger.info("[Launch] Checking initial outcome...")
         
-        if persistence.shouldShowStub {
+        if persistence.boltStrikeShouldShowStub {
             logger.info("[Launch] 🟡 Cached stub flag is TRUE -> showing stub")
             return .showWeb(stubURL)
         }
 
-        if let cachedURL = persistence.cachedURL {
-            logger.info("[Launch] ✅ Found cached URL: \(cachedURL.absoluteString) -> showing WebView")
-            return .showWeb(cachedURL)
+        if let boltStrikeCachedURL = persistence.boltStrikeCachedURL {
+            logger.info("[Launch] ✅ Found cached URL: \(boltStrikeCachedURL.absoluteString) -> showing WebView")
+            return .showWeb(boltStrikeCachedURL)
         }
 
         logger.info("[Launch] 🔄 No cache found -> loading")
         return .loading
     }
 
-    func resolveOutcome() async -> LaunchOutcome {
+    func boltStrikeResolveOutcome() async -> BoltStrikeLaunchOutcome {
         logger.info("[Launch] Resolving outcome...")
         
-        if persistence.shouldShowStub {
+        if persistence.boltStrikeShouldShowStub {
             logger.info("[Launch] 🟡 Cached stub flag is TRUE -> showing stub (no request needed)")
             return .showWeb(stubURL)
         }
 
-        if let cached = persistence.cachedURL {
+        if let cached = persistence.boltStrikeCachedURL {
             logger.info("[Launch] ✅ Found cached URL: \(cached.absoluteString) -> showing WebView (no request needed)")
             return .showWeb(cached)
         }
 
         logger.info("[Launch] No cache -> collecting tracking payload...")
-        guard let payload = await trackingService.collectPayload() else {
+        guard let payload = await trackingService.boltStrikeCollectPayload() else {
             logger.error("[Launch] ❌ Failed to collect tracking payload -> showing stub")
-            persistence.shouldShowStub = true
+            persistence.boltStrikeShouldShowStub = true
             return .showWeb(stubURL)
         }
         logger.info("[Launch] ✅ Tracking payload collected successfully")
 
         do {
             logger.info("[Launch] Fetching link parts from Firebase...")
-            let linkParts = try await remoteConfigService.fetchLinkParts()
+            let linkParts = try await remoteConfigService.boltStrikeFetchLinkParts()
             
-            guard let backendURL = linkAssemblyService.buildBackendURL(parts: linkParts, payload: payload) else {
+            guard let backendURL = linkAssemblyService.boltStrikeBuildBackendURL(parts: linkParts, payload: payload) else {
                 logger.error("[Launch] ❌ Failed to build backend URL -> showing stub")
-                persistence.shouldShowStub = true
+                persistence.boltStrikeShouldShowStub = true
                 return .showWeb(stubURL)
             }
 
             logger.info("[Launch] Sending POST request to backend...")
-            let response = try await backendClient.requestFinalLink(url: backendURL)
+            let response = try await backendClient.boltStrikeRequestFinalLink(url: backendURL)
             
             guard let finalURL = response.finalURL else {
                 logger.warning("[Launch] ⚠️ Backend returned empty domain/tld -> showing stub")
                 logger.info("[Launch] Reason: domain='\(response.domain)', tld='\(response.tld)'")
-                persistence.shouldShowStub = true
+                persistence.boltStrikeShouldShowStub = true
                 return .showWeb(stubURL)
             }
 
             logger.info("[Launch] ✅ SUCCESS! Final URL: \(finalURL.absoluteString)")
             logger.info("[Launch] Caching URL and showing WebView")
-            persistence.cachedURL = finalURL
-            persistence.shouldShowStub = false
-            cookieStore.persistCookies()
+            persistence.boltStrikeCachedURL = finalURL
+            persistence.boltStrikeShouldShowStub = false
+            cookieStore.boltStrikePersistCookies()
             return .showWeb(finalURL)
         } catch {
             logger.error("[Launch] ❌ Error during flow: \(error.localizedDescription)")
             logger.info("[Launch] Setting stub flag and showing stub")
-            persistence.shouldShowStub = true
+            persistence.boltStrikeShouldShowStub = true
             return .showWeb(stubURL)
         }
     }

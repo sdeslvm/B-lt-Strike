@@ -1,7 +1,7 @@
 
 import Foundation
 
-enum LaunchState: Equatable {
+enum BoltStrikeLaunchState: Equatable {
     case loading
     case web(url: URL)
     case stub

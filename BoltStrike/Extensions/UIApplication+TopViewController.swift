@@ -1,17 +1,17 @@
 import UIKit
 
 extension UIApplication {
-    func topViewController(base: UIViewController? = UIApplication.shared.keyWindow?.rootViewController) -> UIViewController? {
+    func boltStrikeTopViewController(base: UIViewController? = UIApplication.shared.keyWindow?.rootViewController) -> UIViewController? {
         if let nav = base as? UINavigationController {
-            return topViewController(base: nav.visibleViewController)
+            return boltStrikeTopViewController(base: nav.visibleViewController)
         }
         if let tab = base as? UITabBarController {
             if let selected = tab.selectedViewController {
-                return topViewController(base: selected)
+                return boltStrikeTopViewController(base: selected)
             }
         }
         if let presented = base?.presentedViewController {
-            return topViewController(base: presented)
+            return boltStrikeTopViewController(base: presented)
         }
         return base
     }

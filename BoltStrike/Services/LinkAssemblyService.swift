@@ -4,9 +4,9 @@ import os.log
 
 private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "BoltStrike", category: "LinkAssembly")
 
-struct LinkAssemblyService {
-    func buildBackendURL(parts: RemoteLinkParts, payload: TrackingPayload) -> URL? {
-        let query = payload.toQueryString()
+struct BoltStrikeLinkAssemblyService {
+    func boltStrikeBuildBackendURL(parts: BoltStrikeRemoteLinkParts, payload: BoltStrikeTrackingPayload) -> URL? {
+        let query = payload.boltStrikeToQueryString()
         logger.info("[LinkAssembly] Query string (before base64): \(query)")
         
         guard let encoded = query.data(using: .utf8)?.base64EncodedString() else {

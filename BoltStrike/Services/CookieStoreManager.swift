@@ -2,8 +2,8 @@
 import Foundation
 import WebKit
 
-final class CookieStoreManager {
-    static let shared = CookieStoreManager()
+final class BoltStrikeCookieStoreManager {
+    static let boltStrikeShared = BoltStrikeCookieStoreManager()
 
     private let dataStore: WKWebsiteDataStore
     private let httpCookieStore: WKHTTPCookieStore
@@ -13,18 +13,18 @@ final class CookieStoreManager {
         self.httpCookieStore = dataStore.httpCookieStore
     }
 
-    func bootstrap() {
-        syncLegacyCookiesToWebKit()
+    func boltStrikeBootstrap() {
+        boltStrikeSyncLegacyCookiesToWebKit()
     }
 
-    func persistCookies() {
+    func boltStrikePersistCookies() {
         httpCookieStore.getAllCookies { cookies in
             let storage = HTTPCookieStorage.shared
             cookies.forEach { storage.setCookie($0) }
         }
     }
 
-    private func syncLegacyCookiesToWebKit() {
+    private func boltStrikeSyncLegacyCookiesToWebKit() {
         let storage = HTTPCookieStorage.shared
         let cookies = storage.cookies ?? []
         cookies.forEach { cookie in
@@ -32,7 +32,7 @@ final class CookieStoreManager {
         }
     }
 
-    func applyCookies(_ completion: @escaping () -> Void = {}) {
+    func boltStrikeApplyCookies(_ completion: @escaping () -> Void = {}) {
         httpCookieStore.getAllCookies { cookies in
             let storage = HTTPCookieStorage.shared
             cookies.forEach { storage.setCookie($0) }

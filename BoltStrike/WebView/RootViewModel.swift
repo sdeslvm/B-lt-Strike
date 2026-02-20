@@ -3,40 +3,40 @@ import Foundation
 import Combine
 
 @MainActor
-final class RootViewModel: ObservableObject {
-    @Published private(set) var state: LaunchState = .loading
+final class BoltStrikeRootViewModel: ObservableObject {
+    @Published private(set) var state: BoltStrikeLaunchState = .loading
     @Published var errorMessage: String?
 
-    private let launchService: LaunchService
+    private let launchService: BoltStrikeLaunchService
 
-    init(launchService: LaunchService) {
+    init(launchService: BoltStrikeLaunchService) {
         self.launchService = launchService
-        state = mapOutcome(launchService.initialOutcome())
+        state = boltStrikeMapOutcome(launchService.boltStrikeInitialOutcome())
     }
 
-    func start() {
+    func boltStrikeStart() {
         Task {
-            await executeResolve()
+            await boltStrikeExecuteResolve()
         }
     }
 
-    func retry() {
+    func boltStrikeRetry() {
         errorMessage = nil
         state = .loading
-        start()
+        boltStrikeStart()
     }
 
-    private func executeResolve() async {
-        let outcome = await launchService.resolveOutcome()
+    private func boltStrikeExecuteResolve() async {
+        let outcome = await launchService.boltStrikeResolveOutcome()
         await MainActor.run {
-            self.state = self.mapOutcome(outcome)
+            self.state = self.boltStrikeMapOutcome(outcome)
             if case .showStub = outcome {
                 self.errorMessage = "Failed to obtain link. Showing a placeholder."
             }
         }
     }
 
-    private func mapOutcome(_ outcome: LaunchOutcome) -> LaunchState {
+    private func boltStrikeMapOutcome(_ outcome: BoltStrikeLaunchOutcome) -> BoltStrikeLaunchState {
         switch outcome {
         case .loading:
             return .loading

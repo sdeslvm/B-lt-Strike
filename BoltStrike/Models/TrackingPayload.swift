@@ -1,7 +1,7 @@
 
 import Foundation
 
-struct TrackingPayload: Sendable {
+struct BoltStrikeTrackingPayload: Sendable {
     let appsFlyerID: String
     let appInstanceID: String
     let uuid: String
@@ -11,7 +11,7 @@ struct TrackingPayload: Sendable {
     let fcmToken: String
     let attToken: String
 
-    func toQueryString() -> String {
+    func boltStrikeToQueryString() -> String {
         [
             "appsflyer_id=\(appsFlyerID)",
             "app_instance_id=\(appInstanceID)",

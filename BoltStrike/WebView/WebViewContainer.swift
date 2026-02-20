@@ -5,8 +5,8 @@ import WebKit
 import UIKit
 import UniformTypeIdentifiers
 
-struct WebViewContainer: UIViewRepresentable {
-    @EnvironmentObject private var coordinator: WebViewCoordinator
+struct BoltStrikeWebViewContainer: UIViewRepresentable {
+    @EnvironmentObject private var coordinator: BoltStrikeWebViewCoordinator
     let url: URL
 
     func makeUIView(context: Context) -> WKWebView {
@@ -23,7 +23,7 @@ struct WebViewContainer: UIViewRepresentable {
         
         // НЕ добавляем скрипт сюда - только для платежных WebView
         
-        let webView = CoordinatedWKWebView(frame: .zero, configuration: configuration)
+        let webView = BoltStrikeCoordinatedWKWebView(frame: .zero, configuration: configuration)
         webView.customUserAgent = coordinator.userAgent
         webView.allowsBackForwardNavigationGestures = true
         webView.scrollView.contentInsetAdjustmentBehavior = .automatic
@@ -51,25 +51,25 @@ struct WebViewContainer: UIViewRepresentable {
         webView.uiDelegate = context.coordinator
         webView.appCoordinator = coordinator
         
-        context.coordinator.attach(webView: webView, appCoordinator: coordinator)
+        context.coordinator.boltStrikeAttach(webView: webView, appCoordinator: coordinator)
         webView.load(URLRequest(url: url))
         return webView
     }
 
     func updateUIView(_ uiView: WKWebView, context: Context) {
-        coordinator.updateState(from: uiView)
+        coordinator.boltStrikeUpdateState(from: uiView)
     }
 
-    func makeCoordinator() -> Coordinator {
-        Coordinator()
+    func makeCoordinator() -> BoltStrikeCoordinator {
+        BoltStrikeCoordinator()
     }
 
-    final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIDocumentPickerDelegate {
+    final class BoltStrikeCoordinator: NSObject, WKNavigationDelegate, WKUIDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UIDocumentPickerDelegate {
         private weak var webView: WKWebView?
-        private weak var appCoordinator: WebViewCoordinator?
+        private weak var appCoordinator: BoltStrikeWebViewCoordinator?
         private var pendingFileUploadCompletion: (([URL]?) -> Void)?
 
-        func attach(webView: WKWebView, appCoordinator: WebViewCoordinator) {
+        func boltStrikeAttach(webView: WKWebView, appCoordinator: BoltStrikeWebViewCoordinator) {
             self.webView = webView
             self.appCoordinator = appCoordinator
             appCoordinator.hostWebView = webView
@@ -78,7 +78,7 @@ struct WebViewContainer: UIViewRepresentable {
         // MARK: - WKNavigationDelegate
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-            appCoordinator?.updateState(from: webView)
+            appCoordinator?.boltStrikeUpdateState(from: webView)
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -93,7 +93,7 @@ struct WebViewContainer: UIViewRepresentable {
                 print("✅ Main WebView finished loading")
             }
             
-            appCoordinator?.updateState(from: webView)
+            appCoordinator?.boltStrikeUpdateState(from: webView)
         }
         
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
@@ -106,11 +106,11 @@ struct WebViewContainer: UIViewRepresentable {
             
             // Обновляем состояние с защитой от nil
             if let coordinator = appCoordinator {
-                coordinator.updateState(from: webView)
+                coordinator.boltStrikeUpdateState(from: webView)
             }
             
             // Если это ошибка загрузки платежной системы, НЕ открываем в Safari, а просто логируем
-            if let url = currentURL, isPaymentURL(url) {
+            if let url = currentURL, boltStrikeIsPaymentURL(url) {
                 print("⚠️ Payment page failed to load, keeping WebView open: \(url)")
                 print("⚠️ Error: \(error.localizedDescription)")
                 return // НЕ закрываем WebView
@@ -134,11 +134,11 @@ struct WebViewContainer: UIViewRepresentable {
             
             // Обновляем состояние с защитой от nil
             if let coordinator = appCoordinator {
-                coordinator.updateState(from: webView)
+                coordinator.boltStrikeUpdateState(from: webView)
             }
             
             // Если это ошибка загрузки платежной системы, НЕ открываем в Safari, а просто логируем
-            if let url = currentURL, isPaymentURL(url) {
+            if let url = currentURL, boltStrikeIsPaymentURL(url) {
                 print("⚠️ Payment page failed to load (provisional), keeping WebView open: \(url)")
                 print("⚠️ Error: \(error.localizedDescription)")
                 return // НЕ закрываем WebView
@@ -183,7 +183,7 @@ struct WebViewContainer: UIViewRepresentable {
             print("🔗 New window request for URL: \(url)")
             
             // Проверяем, является ли URL платежным
-            let isPayment = isPaymentURL(url)
+            let isPayment = boltStrikeIsPaymentURL(url)
             print("💰 Is payment URL: \(isPayment)")
             
             // Блокируем создание WebView для /loading страниц
@@ -201,7 +201,7 @@ struct WebViewContainer: UIViewRepresentable {
             }
             
             // НИКАКИХ ОГРАНИЧЕНИЙ - как обычный браузер
-            let child = appCoordinator.pushChild(with: configuration)
+            let child = appCoordinator.boltStrikePushChild(with: configuration)
             child.navigationDelegate = self
             child.uiDelegate = self  // ВАЖНО: child WebView тоже должен уметь создавать popup!
             
@@ -243,7 +243,7 @@ struct WebViewContainer: UIViewRepresentable {
             return child
         }
         
-        private func createPaymentWebView(for url: URL, with configuration: WKWebViewConfiguration, appCoordinator: WebViewCoordinator?) -> WKWebView? {
+        private func createPaymentWebView(for url: URL, with configuration: WKWebViewConfiguration, appCoordinator: BoltStrikeWebViewCoordinator?) -> WKWebView? {
             print("💳 Creating ULTIMATE payment WebView for: \(url)")
             
             // Используем переданную конфигурацию, а не создаем новую
@@ -427,7 +427,7 @@ struct WebViewContainer: UIViewRepresentable {
             paymentWebView.uiDelegate = self
             
             // Сохраняем как платежный WebView через координатор
-            appCoordinator?.setPaymentWebView(paymentWebView)
+            appCoordinator?.boltStrikeSetPaymentWebView(paymentWebView)
             
             // Загружаем URL
             let request = URLRequest(url: url)
@@ -454,7 +454,7 @@ struct WebViewContainer: UIViewRepresentable {
                 // Закрываем ТОЛЬКО платежный WebView
                 if webView === self.appCoordinator?.paymentWebView {
                     print("🔒 Closing payment WebView from webViewDidClose")
-                    self.appCoordinator?.closePaymentWebView()
+                    self.appCoordinator?.boltStrikeClosePaymentWebView()
                     return
                 }
             }
@@ -470,8 +470,8 @@ struct WebViewContainer: UIViewRepresentable {
                     completionHandler(nil)
                 }))
                 
-                if let topViewController = UIApplication.shared.keyWindow?.rootViewController {
-                    topViewController.present(alert, animated: true)
+                if let boltStrikeTopViewController = UIApplication.shared.keyWindow?.rootViewController {
+                    boltStrikeTopViewController.present(alert, animated: true)
                 }
             }
         }
@@ -497,8 +497,8 @@ struct WebViewContainer: UIViewRepresentable {
                     completionHandler(nil)
                 }))
                 
-                if let topViewController = UIApplication.shared.keyWindow?.rootViewController {
-                    topViewController.present(alert, animated: true)
+                if let boltStrikeTopViewController = UIApplication.shared.keyWindow?.rootViewController {
+                    boltStrikeTopViewController.present(alert, animated: true)
                 }
             }
         }
@@ -630,7 +630,7 @@ struct WebViewContainer: UIViewRepresentable {
         
         // MARK: - Helper Methods
         
-        private func isPaymentURL(_ url: URL) -> Bool {
+        private func boltStrikeIsPaymentURL(_ url: URL) -> Bool {
             let host = url.host?.lowercased() ?? ""
             let path = url.path.lowercased()
             let absoluteString = url.absoluteString.lowercased()
@@ -696,7 +696,7 @@ struct WebViewContainer: UIViewRepresentable {
                     completionHandler()
                 })
                 
-                if let topController = UIApplication.shared.topViewController() {
+                if let topController = UIApplication.shared.boltStrikeTopViewController() {
                     topController.present(alert, animated: true)
                 } else {
                     completionHandler()

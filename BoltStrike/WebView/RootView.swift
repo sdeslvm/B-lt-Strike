@@ -3,19 +3,19 @@
 import SwiftUI
 import WebKit
 
-struct RootView: View {
-    @StateObject var viewModel: RootViewModel
-    @EnvironmentObject private var webCoordinator: WebViewCoordinator
+struct BoltStrikeRootView: View {
+    @StateObject var viewModel: BoltStrikeRootViewModel
+    @EnvironmentObject private var webCoordinator: BoltStrikeWebViewCoordinator
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
             content
         }
-        .onAppear { viewModel.start() }
+        .onAppear { viewModel.boltStrikeStart() }
     }
 
-    private static func isPaymentUrlString(_ urlString: String) -> Bool {
+    private static func boltStrikeIsPaymentUrlString(_ urlString: String) -> Bool {
         let lowercased = urlString.lowercased()
         return lowercased.contains("paymentiq") ||
             lowercased.contains("payment") ||
@@ -29,11 +29,11 @@ struct RootView: View {
         case .loading:
             LoadingStateView()
         case .stub:
-            StubStateView(message: viewModel.errorMessage ?? "Nothing to show yet.", retry: viewModel.retry)
+            StubStateView(message: viewModel.errorMessage ?? "Nothing to show yet.", retry: viewModel.boltStrikeRetry)
         case .web(let url):
             WebShellView(url: url)
         case .failed:
-            StubStateView(message: "An error occurred. Please try again later.", retry: viewModel.retry)
+            StubStateView(message: "An error occurred. Please try again later.", retry: viewModel.boltStrikeRetry)
         }
     }
 
@@ -85,14 +85,14 @@ struct RootView: View {
     }
 
     private struct WebShellView: View {
-        @EnvironmentObject private var webCoordinator: WebViewCoordinator
+        @EnvironmentObject private var webCoordinator: BoltStrikeWebViewCoordinator
         @State private var presentedChildWebView: WKWebView?
         @State private var presentedPaymentWebView: WKWebView?
         @State private var dragOffset: CGSize = .zero
         let url: URL
 
         var body: some View {
-            let webShellView = WebViewContainer(url: url)
+            let webShellView = BoltStrikeWebViewContainer(url: url)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .offset(x: dragOffset.width, y: 0)
                 .gesture(
@@ -110,7 +110,7 @@ struct RootView: View {
                                     dragOffset = CGSize(width: -UIScreen.main.bounds.width, height: 0)
                                 }
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                    webCoordinator.goBack()
+                                    webCoordinator.boltStrikeGoBack()
                                     withAnimation(.spring()) {
                                         dragOffset = .zero
                                     }
@@ -140,9 +140,9 @@ struct RootView: View {
                 // Если есть платежный WebView, но открывается обычный дочерний — закрываем платежный
                 if let paymentWebView = webCoordinator.paymentWebView, let newValue = newValue {
                     let childUrl = newValue.url?.absoluteString ?? ""
-                    if !RootView.isPaymentUrlString(childUrl) {
+                    if !BoltStrikeRootView.boltStrikeIsPaymentUrlString(childUrl) {
                         print("⚠️ Payment WebView exists, closing to show child WebView")
-                        webCoordinator.closePaymentWebView()
+                        webCoordinator.boltStrikeClosePaymentWebView()
                     } else {
                         print("⚠️ Payment WebView exists, skipping child WebView presentation")
                         presentedChildWebView = nil
@@ -166,7 +166,7 @@ struct RootView: View {
             if webCoordinator.paymentWebView != nil {
                 print("⚠️ Payment WebView opening, closing child WebView")
                 presentedChildWebView = nil
-                webCoordinator.closeChild()
+                webCoordinator.boltStrikeCloseChild()
                 return
             }
             
@@ -196,7 +196,7 @@ struct RootView: View {
                     print("📱 FullScreenCover set: dismissing")
                     // НЕ сбрасываем presentedChildWebView - пусть остается видимым
                     // presentedChildWebView = nil
-                    // webCoordinator.closeChild()
+                    // webCoordinator.boltStrikeCloseChild()
                 }
             )) { wrapper in
             // ВАЖНО: Простая обертка для WebView с уникальным id для пересоздания
@@ -219,7 +219,7 @@ struct RootView: View {
                 set: { _ in
                     print("💳 Payment FullScreenCover set: dismissing")
                     presentedPaymentWebView = nil
-                    webCoordinator.closePaymentWebView()
+                    webCoordinator.boltStrikeClosePaymentWebView()
                 }
             )) { wrapper in
                 PaymentWebViewContainer(webView: wrapper.webView)
@@ -242,7 +242,7 @@ struct RootView: View {
     
     private struct ChildWebViewContainer: View {
         let webView: WKWebView
-        @EnvironmentObject private var webCoordinator: WebViewCoordinator
+        @EnvironmentObject private var webCoordinator: BoltStrikeWebViewCoordinator
         @Environment(\.dismiss) private var dismiss
         @State private var dragOffset: CGSize = .zero
         
@@ -288,7 +288,7 @@ struct RootView: View {
     
     private struct SimpleWebViewContainer: UIViewRepresentable {
         let webView: WKWebView
-        @EnvironmentObject private var webCoordinator: WebViewCoordinator
+        @EnvironmentObject private var webCoordinator: BoltStrikeWebViewCoordinator
         
         func makeUIView(context: Context) -> UIView {
             print("📱 Creating SimpleWebViewContainer")
@@ -308,7 +308,7 @@ struct RootView: View {
             ])
             
             // ВАЖНО: Добавляем свайп для возврата к предыдущему WebView
-            let swipeGesture = UISwipeGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleSwipeBack))
+            let swipeGesture = UISwipeGestureRecognizer(target: context.coordinator, action: #selector(BoltStrikeCoordinator.handleSwipeBack))
             swipeGesture.direction = .right
             containerView.addGestureRecognizer(swipeGesture)
             
@@ -320,23 +320,23 @@ struct RootView: View {
             // Ничего не обновляем
         }
         
-        func makeCoordinator() -> Coordinator {
-            Coordinator(webView: webView, webCoordinator: webCoordinator)
+        func makeCoordinator() -> BoltStrikeCoordinator {
+            BoltStrikeCoordinator(webView: webView, webCoordinator: webCoordinator)
         }
         
-        class Coordinator: NSObject {
+        class BoltStrikeCoordinator: NSObject {
             let webView: WKWebView
-            let webCoordinator: WebViewCoordinator
+            let webCoordinator: BoltStrikeWebViewCoordinator
             
-            init(webView: WKWebView, webCoordinator: WebViewCoordinator) {
+            init(webView: WKWebView, webCoordinator: BoltStrikeWebViewCoordinator) {
                 self.webView = webView
                 self.webCoordinator = webCoordinator
             }
             
             @objc func handleSwipeBack() {
                 print("👆 Swipe back gesture detected")
-                if webCoordinator.canGoBackToPreviousWebView() {
-                    webCoordinator.goBackToPreviousWebView()
+                if webCoordinator.boltStrikeCanGoBackToPreviousWebView() {
+                    webCoordinator.boltStrikeGoBackToPreviousWebView()
                 } else {
                     print("❌ Cannot go back - no previous WebView")
                 }
@@ -388,7 +388,7 @@ struct RootView: View {
     
     private struct PaymentWebViewContainer: View {
         let webView: WKWebView
-        @EnvironmentObject private var webCoordinator: WebViewCoordinator
+        @EnvironmentObject private var webCoordinator: BoltStrikeWebViewCoordinator
         @Environment(\.dismiss) private var dismiss
         @State private var dragOffset: CGSize = .zero
         

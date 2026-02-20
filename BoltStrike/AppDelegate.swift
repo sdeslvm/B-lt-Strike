@@ -8,7 +8,7 @@ import FirebaseMessaging
 import AppsFlyerLib
 
 /// Хранит константы конфигурации SDK, которые вы заполните реальными значениями.
-enum ThirdPartyConfig {
+enum BoltStrikeThirdPartyConfig {
     /// Запросите dev-key у заказчика и подставьте сюда.
     static var appsFlyerDevKey: String {
         Bundle.main.object(forInfoDictionaryKey: "AppsFlyerDevKey") as? String ?? ""
@@ -19,11 +19,11 @@ enum ThirdPartyConfig {
     }
 }
 
-final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate, AppsFlyerLibDelegate {
+final class BoltStrikeAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate, AppsFlyerLibDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         FirebaseApp.configure()
-        CookieStoreManager.shared.bootstrap()
+        BoltStrikeCookieStoreManager.boltStrikeShared.boltStrikeBootstrap()
         configureNotifications(application: application)
         configureAppsFlyer()
         return true
@@ -85,7 +85,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         application.registerForRemoteNotifications()
         
         // Configure Firebase Messaging with enhanced error handling
-        Messaging.messaging().delegate = PushTokenStore.shared
+        Messaging.messaging().delegate = BoltStrikePushTokenStore.boltStrikeShared
         
         // Ensure Firebase Messaging is properly initialized
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -94,7 +94,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
                     print("FCM token error: \(error.localizedDescription)")
                 } else if let token = token {
                     print("FCM token initialized: \(token.prefix(30))...")
-                    PushTokenStore.shared.update(token: token)
+                    BoltStrikePushTokenStore.boltStrikeShared.boltStrikeUpdate(token: token)
                 } else {
                     print("FCM token is nil")
                 }
@@ -114,8 +114,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 
     private func configureAppsFlyer() {
         let appsFlyer = AppsFlyerLib.shared()
-        let devKey = ThirdPartyConfig.appsFlyerDevKey
-        let appID = ThirdPartyConfig.appsFlyerAppID
+        let devKey = BoltStrikeThirdPartyConfig.appsFlyerDevKey
+        let appID = BoltStrikeThirdPartyConfig.appsFlyerAppID
         #if DEBUG
         if devKey.isEmpty || devKey == "REPLACE_WITH_REAL_AF_DEV_KEY" {
             assertionFailure("AppsFlyerDevKey is not configured in Info.plist")

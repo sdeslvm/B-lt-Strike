@@ -2,32 +2,32 @@
 
 import Foundation
 
-struct AppDependencies {
+struct BoltStrikeAppDependencies {
     // MARK: - Dependencies
-    let persistenceService: PersistenceService
-    let trackingService: TrackingService
-    let remoteConfigService: FirebaseRealtimeService
-    let backendClient: BackendClient
-    let linkAssemblyService: LinkAssemblyService
-    let launchService: LaunchService
-    let webViewCoordinator: WebViewCoordinator
+    let persistenceService: BoltStrikePersistenceService
+    let trackingService: BoltStrikeTrackingService
+    let remoteConfigService: BoltStrikeFirebaseRealtimeService
+    let backendClient: BoltStrikeBackendClient
+    let linkAssemblyService: BoltStrikeLinkAssemblyService
+    let launchService: BoltStrikeLaunchService
+    let webViewCoordinator: BoltStrikeWebViewCoordinator
 
     init() {
-        let persistenceService = PersistenceService()
-        let cookieStore = CookieStoreManager.shared
-        let pushStore = PushTokenStore.shared
+        let persistenceService = BoltStrikePersistenceService()
+        let cookieStore = BoltStrikeCookieStoreManager.boltStrikeShared
+        let pushStore = BoltStrikePushTokenStore.boltStrikeShared
 
         #if targetEnvironment(simulator)
-        persistenceService.clear()
+        persistenceService.boltStrikeClear()
         #endif
 
         self.persistenceService = persistenceService
-        self.trackingService = TrackingService(persistence: persistenceService,
+        self.trackingService = BoltStrikeTrackingService(persistence: persistenceService,
                                                pushTokenStore: pushStore)
-        self.remoteConfigService = FirebaseRealtimeService()
-        self.backendClient = BackendClient()
-        self.linkAssemblyService = LinkAssemblyService()
-        self.launchService = LaunchService(
+        self.remoteConfigService = BoltStrikeFirebaseRealtimeService()
+        self.backendClient = BoltStrikeBackendClient()
+        self.linkAssemblyService = BoltStrikeLinkAssemblyService()
+        self.launchService = BoltStrikeLaunchService(
             persistence: persistenceService,
             trackingService: trackingService,
             remoteConfigService: remoteConfigService,
@@ -35,6 +35,6 @@ struct AppDependencies {
             linkAssemblyService: linkAssemblyService,
             cookieStore: cookieStore
         )
-        self.webViewCoordinator = WebViewCoordinator()
+        self.webViewCoordinator = BoltStrikeWebViewCoordinator()
     }
 }

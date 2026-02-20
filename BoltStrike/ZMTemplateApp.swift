@@ -3,12 +3,12 @@ import SwiftUI
 
 @main
 struct BoltStrikeApp: App {
-    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-    private let dependencies = AppDependencies()
+    @UIApplicationDelegateAdaptor(BoltStrikeAppDelegate.self) private var appDelegate
+    private let dependencies = BoltStrikeAppDependencies()
     
     var body: some Scene {
         WindowGroup {
-            RootView(viewModel: RootViewModel(launchService: dependencies.launchService))
+            BoltStrikeRootView(viewModel: BoltStrikeRootViewModel(launchService: dependencies.launchService))
                 .environmentObject(dependencies.webViewCoordinator)
         }
     }

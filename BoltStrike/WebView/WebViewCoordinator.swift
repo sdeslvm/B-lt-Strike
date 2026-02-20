@@ -6,7 +6,7 @@ import WebKit
 import UIKit
 #endif
 
-final class WebViewCoordinator: NSObject, ObservableObject {
+final class BoltStrikeWebViewCoordinator: NSObject, ObservableObject {
     @Published var canGoBack = false
     @Published var canGoForward = false
     @Published var isLoading = false
@@ -20,11 +20,11 @@ final class WebViewCoordinator: NSObject, ObservableObject {
     var userAgent: String = "Version/17.2 Mobile/15E148 Safari/604.1"
     weak var hostWebView: WKWebView?
 
-    func updateState(from webView: WKWebView) {
+    func boltStrikeUpdateState(from webView: WKWebView) {
         // Проверяем, что webView не nil и на главном потоке
         guard !Thread.isMainThread else {
             DispatchQueue.main.async { [weak self] in
-                self?.updateState(from: webView)
+                self?.boltStrikeUpdateState(from: webView)
             }
             return
         }
@@ -35,7 +35,7 @@ final class WebViewCoordinator: NSObject, ObservableObject {
         currentURL = webView.url
     }
 
-    func pushChild(with configuration: WKWebViewConfiguration) -> WKWebView {
+    func boltStrikePushChild(with configuration: WKWebViewConfiguration) -> WKWebView {
         // НЕ очищаем старый дочерний WebView - пусть работают несколько окон
         print("📱 Creating new child WebView (keeping existing ones)")
         
@@ -71,7 +71,7 @@ final class WebViewCoordinator: NSObject, ObservableObject {
         return webView
     }
     
-    func pushPayment(with configuration: WKWebViewConfiguration) -> WKWebView {
+    func boltStrikePushPayment(with configuration: WKWebViewConfiguration) -> WKWebView {
         // Если уже есть платежный WebView, очищаем его перед созданием нового
         if let existing = paymentWebView {
             print("⚠️ Payment WebView already exists, cleaning up...")
@@ -91,7 +91,7 @@ final class WebViewCoordinator: NSObject, ObservableObject {
         return webView
     }
     
-    func setPaymentWebView(_ webView: WKWebView) {
+    func boltStrikeSetPaymentWebView(_ webView: WKWebView) {
         // Очищаем предыдущий платежный WebView если есть
         if let existing = paymentWebView {
             print("⚠️ Payment WebView already exists, cleaning up...")
@@ -106,7 +106,7 @@ final class WebViewCoordinator: NSObject, ObservableObject {
         print("✅ Set new payment WebView")
     }
     
-    func closePaymentWebView() {
+    func boltStrikeClosePaymentWebView() {
         guard let payment = paymentWebView else { 
             print("⚠️ No payment WebView to close")
             return 
@@ -127,7 +127,7 @@ final class WebViewCoordinator: NSObject, ObservableObject {
         }
     }
 
-    func goBackToPreviousWebView() -> Bool {
+    func boltStrikeGoBackToPreviousWebView() -> Bool {
         print("🔙 Attempting to go back to previous WebView")
         print("📚 Current stack size: \(webViewStack.count)")
         
@@ -148,11 +148,11 @@ final class WebViewCoordinator: NSObject, ObservableObject {
         return true
     }
     
-    func canGoBackToPreviousWebView() -> Bool {
+    func boltStrikeCanGoBackToPreviousWebView() -> Bool {
         return !webViewStack.isEmpty
     }
     
-    func closeChild() {
+    func boltStrikeCloseChild() {
         guard let child = childWebView else { 
             print("⚠️ No child WebView to close")
             return 
@@ -173,7 +173,7 @@ final class WebViewCoordinator: NSObject, ObservableObject {
         }
     }
 
-    func goBack() {
+    func boltStrikeGoBack() {
         if let payment = paymentWebView, payment.canGoBack {
             payment.goBack()
         } else if let child = childWebView, child.canGoBack {
@@ -183,7 +183,7 @@ final class WebViewCoordinator: NSObject, ObservableObject {
         }
     }
 
-    func goForward() {
+    func boltStrikeGoForward() {
         if let payment = paymentWebView, payment.canGoForward {
             payment.goForward()
         } else if let child = childWebView, child.canGoForward {

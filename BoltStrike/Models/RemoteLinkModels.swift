@@ -1,7 +1,7 @@
 
 import Foundation
 
-struct RemoteLinkParts: Decodable, Sendable {
+struct BoltStrikeRemoteLinkParts: Decodable, Sendable {
     let host: String
     let path: String
 
@@ -11,7 +11,7 @@ struct RemoteLinkParts: Decodable, Sendable {
     }
 }
 
-struct BackendLinkResponse: Decodable, Sendable {
+struct BoltStrikeBackendLinkResponse: Decodable, Sendable {
     let domain: String
     let tld: String
 
@@ -26,7 +26,7 @@ struct BackendLinkResponse: Decodable, Sendable {
     }
 }
 
-enum LaunchOutcome: Sendable {
+enum BoltStrikeLaunchOutcome: Sendable {
     case showWeb(URL)
     case showStub
     case loading

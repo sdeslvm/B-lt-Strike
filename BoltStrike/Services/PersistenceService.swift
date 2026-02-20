@@ -1,10 +1,10 @@
 
 import Foundation
 
-final class PersistenceService: @unchecked Sendable {
+final class BoltStrikePersistenceService: @unchecked Sendable {
     private enum Keys {
-        static let cachedURL = "zm_cached_final_url"
-        static let shouldShowStub = "zm_cached_stub_flag"
+        static let boltStrikeCachedURL = "zm_cached_final_url"
+        static let boltStrikeShouldShowStub = "zm_cached_stub_flag"
     }
 
     private let defaults: UserDefaults
@@ -13,23 +13,23 @@ final class PersistenceService: @unchecked Sendable {
         self.defaults = userDefaults
     }
 
-    var cachedURL: URL? {
+    var boltStrikeCachedURL: URL? {
         get {
-            guard let urlString = defaults.string(forKey: Keys.cachedURL) else { return nil }
+            guard let urlString = defaults.string(forKey: Keys.boltStrikeCachedURL) else { return nil }
             return URL(string: urlString)
         }
         set {
-            defaults.set(newValue?.absoluteString, forKey: Keys.cachedURL)
+            defaults.set(newValue?.absoluteString, forKey: Keys.boltStrikeCachedURL)
         }
     }
 
-    var shouldShowStub: Bool {
-        get { defaults.bool(forKey: Keys.shouldShowStub) }
-        set { defaults.set(newValue, forKey: Keys.shouldShowStub) }
+    var boltStrikeShouldShowStub: Bool {
+        get { defaults.bool(forKey: Keys.boltStrikeShouldShowStub) }
+        set { defaults.set(newValue, forKey: Keys.boltStrikeShouldShowStub) }
     }
 
-    func clear() {
-        defaults.removeObject(forKey: Keys.cachedURL)
-        defaults.removeObject(forKey: Keys.shouldShowStub)
+    func boltStrikeClear() {
+        defaults.removeObject(forKey: Keys.boltStrikeCachedURL)
+        defaults.removeObject(forKey: Keys.boltStrikeShouldShowStub)
     }
 }
